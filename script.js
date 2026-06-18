@@ -3,9 +3,12 @@ const item = document.getElementById("item");
 
 const scoreText = document.getElementById("score");
 const missText = document.getElementById("miss");
+const levelText = document.getElementById("level");
 
 const message = document.getElementById("message");
 const restartBtn = document.getElementById("restartBtn");
+const startBtn = document.getElementById("startBtn");
+const startScreen = document.getElementById("startScreen");
 
 const nameBox = document.getElementById("nameBox");
 const nicknameInput = document.getElementById("nicknameInput");
@@ -25,9 +28,11 @@ let itemY = 0;
 
 let score = 0;
 let miss = 0;
+let level = 1;
 
-let itemSpeed = 2.2;
+let itemSpeed = 2.0;
 let gameOver = false;
+let gameStarted = false;
 let gameResult = "";
 let alreadySaved = false;
 
@@ -36,7 +41,6 @@ const keys = {
   right: false
 };
 
-// 낙하물을 받았을 때 효과음
 function playCatchSound() {
   const audioContext = new AudioContext();
 
@@ -63,10 +67,8 @@ function playCatchSound() {
   oscillator.stop(audioContext.currentTime + 0.15);
 }
 
-// 승리했을 때 효과음
 function playWinSound() {
   const audioContext = new AudioContext();
-
   const notes = [523, 659, 784, 1046];
 
   notes.forEach((note, index) => {
@@ -97,10 +99,8 @@ function playWinSound() {
   });
 }
 
-// 패배했을 때 효과음
 function playLoseSound() {
   const audioContext = new AudioContext();
-
   const notes = [300, 220, 150];
 
   notes.forEach((note, index) => {
@@ -129,6 +129,21 @@ function playLoseSound() {
     oscillator.start(audioContext.currentTime + index * 0.2);
     oscillator.stop(audioContext.currentTime + index * 0.2 + 0.18);
   });
+}
+
+function updateDifficulty() {
+  if (score < 7) {
+    level = 1;
+    itemSpeed = 2.0;
+  } else if (score < 14) {
+    level = 2;
+    itemSpeed = 3.0;
+  } else {
+    level = 3;
+    itemSpeed = 4.2;
+  }
+
+  levelText.textContent = level;
 }
 
 function moveBasket() {
@@ -186,9 +201,14 @@ function checkCatch() {
 
     playCatchSound();
     showCatchEffect();
+    updateDifficulty();
 
-    if (score % 5 === 0) {
-      itemSpeed += 0.4;
+    if (score === 7) {
+      message.textContent = "2단계 시작! 낙하물이 더 빨라집니다.";
+    }
+
+    if (score === 14) {
+      message.textContent = "3단계 시작! 최고 난이도입니다!";
     }
 
     if (score >= 20) {
@@ -249,6 +269,7 @@ function saveRanking() {
     nickname: nickname,
     score: score,
     miss: miss,
+    level: level,
     result: gameResult,
     date: now.toLocaleString()
   };
@@ -258,7 +279,6 @@ function saveRanking() {
 
   records.push(newRecord);
 
-  // 최근 10개 기록만 저장
   if (records.length > 10) {
     records.shift();
   }
@@ -287,21 +307,20 @@ function showRanking() {
     const li = document.createElement("li");
 
     li.textContent =
-      `${index + 1}. ${record.nickname} / ${record.result} / 점수 ${record.score}점 / 놓침 ${record.miss}개 / ${record.date}`;
+      `${index + 1}. ${record.nickname} / ${record.result} / ${record.level || 1}단계 / 점수 ${record.score}점 / 놓침 ${record.miss}개 / ${record.date}`;
 
     rankingList.appendChild(li);
   });
 }
 
 function gameLoop() {
-  if (gameOver) {
+  if (gameOver || !gameStarted) {
     return;
   }
 
   moveBasket();
 
   itemY += itemSpeed;
-
   item.style.top = itemY + "px";
 
   checkCatch();
@@ -310,12 +329,27 @@ function gameLoop() {
   requestAnimationFrame(gameLoop);
 }
 
+function startGame() {
+  gameStarted = true;
+  gameOver = false;
+
+  startScreen.classList.add("hidden");
+
+  message.textContent =
+    "← → 방향키로 바구니를 움직여 낙하물을 받으세요!";
+
+  resetItem();
+  gameLoop();
+}
+
 function restartGame() {
   score = 0;
   miss = 0;
+  level = 1;
 
-  itemSpeed = 2.2;
+  itemSpeed = 2.0;
   gameOver = false;
+  gameStarted = false;
   gameResult = "";
   alreadySaved = false;
 
@@ -323,17 +357,19 @@ function restartGame() {
 
   scoreText.textContent = 0;
   missText.textContent = 0;
+  levelText.textContent = 1;
 
   message.textContent =
-    "← → 방향키로 바구니를 움직여 낙하물을 받으세요!";
+    "게임 시작 버튼을 눌러주세요!";
 
   nameBox.classList.add("hidden");
   nicknameInput.value = "";
 
+  startScreen.classList.remove("hidden");
+
   basket.style.left = basketX + "px";
 
   resetItem();
-  gameLoop();
 }
 
 document.addEventListener("keydown", (event) => {
@@ -356,9 +392,9 @@ document.addEventListener("keyup", (event) => {
   }
 });
 
+startBtn.addEventListener("click", startGame);
 saveRankBtn.addEventListener("click", saveRanking);
 restartBtn.addEventListener("click", restartGame);
 
 resetItem();
 showRanking();
-gameLoop();
