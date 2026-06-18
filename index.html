@@ -12,7 +12,7 @@
     <h1>낙하물 받기 게임</h1>
 
     <div class="info">
-      <p>점수: <span id="score">0</span> / 20</p>
+      <p>점수: <span id="score">0</span></p>
       <p>놓친 개수: <span id="miss">0</span> / 3</p>
       <p>단계: <span id="level">1</span></p>
     </div>
@@ -20,18 +20,30 @@
     <div id="game">
       <div id="startScreen">
         <h2>낙하물 받기</h2>
-        <p>← → 방향키로 바구니를 움직이세요.</p>
-        <p>점수가 오를수록 1단계 → 2단계 → 3단계로 어려워집니다.</p>
+        <p>← → 방향키로 캐릭터를 움직이세요.</p>
+        <p>3단계 클리어 후 무한모드에 도전할 수 있습니다.</p>
         <button id="startBtn">게임 시작</button>
       </div>
 
-      <div id="basket"></div>
+      <div id="infiniteScreen" class="hidden">
+        <h2>3단계 클리어!</h2>
+        <p>끝없이 이어지는 무한모드를 플레이하시겠습니까?</p>
+        <button id="challengeBtn">도전하기</button>
+      </div>
+
+      <div id="basket">
+        <div class="head"></div>
+        <div class="hair"></div>
+        <div class="body"></div>
+        <div class="left-arm"></div>
+        <div class="right-arm"></div>
+        <div class="real-basket"></div>
+      </div>
+
       <div id="item"></div>
     </div>
 
-    <p id="message">
-      게임 시작 버튼을 눌러주세요!
-    </p>
+    <p id="message">게임 시작 버튼을 눌러주세요!</p>
 
     <div id="nameBox" class="hidden">
       <input id="nicknameInput" type="text" placeholder="닉네임 입력">
