@@ -21,9 +21,7 @@ let itemY = 0;
 let score = 0;
 let miss = 0;
 
-// 기존보다 느리게 수정
 let itemSpeed = 2.2;
-
 let gameOver = false;
 
 const keys = {
@@ -31,7 +29,7 @@ const keys = {
   right: false
 };
 
-// 효과음 만들기
+// 낙하물을 받았을 때 효과음
 function playCatchSound() {
   const audioContext = new AudioContext();
 
@@ -56,6 +54,74 @@ function playCatchSound() {
 
   oscillator.start();
   oscillator.stop(audioContext.currentTime + 0.15);
+}
+
+// 승리했을 때 효과음
+function playWinSound() {
+  const audioContext = new AudioContext();
+
+  const notes = [523, 659, 784, 1046];
+
+  notes.forEach((note, index) => {
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(
+      note,
+      audioContext.currentTime + index * 0.18
+    );
+
+    gainNode.gain.setValueAtTime(
+      0.25,
+      audioContext.currentTime + index * 0.18
+    );
+
+    gainNode.gain.exponentialRampToValueAtTime(
+      0.01,
+      audioContext.currentTime + index * 0.18 + 0.15
+    );
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    oscillator.start(audioContext.currentTime + index * 0.18);
+    oscillator.stop(audioContext.currentTime + index * 0.18 + 0.15);
+  });
+}
+
+// 패배했을 때 효과음
+function playLoseSound() {
+  const audioContext = new AudioContext();
+
+  const notes = [300, 220, 150];
+
+  notes.forEach((note, index) => {
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscillator.type = "sawtooth";
+    oscillator.frequency.setValueAtTime(
+      note,
+      audioContext.currentTime + index * 0.2
+    );
+
+    gainNode.gain.setValueAtTime(
+      0.2,
+      audioContext.currentTime + index * 0.2
+    );
+
+    gainNode.gain.exponentialRampToValueAtTime(
+      0.01,
+      audioContext.currentTime + index * 0.2 + 0.18
+    );
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    oscillator.start(audioContext.currentTime + index * 0.2);
+    oscillator.stop(audioContext.currentTime + index * 0.2 + 0.18);
+  });
 }
 
 function moveBasket() {
@@ -109,13 +175,11 @@ function checkCatch() {
 
   if (hitHeight && hitWidth) {
     score++;
-
     scoreText.textContent = score;
 
     playCatchSound();
     showCatchEffect();
 
-    // 5점마다 조금씩만 빨라지게 수정
     if (score % 5 === 0) {
       itemSpeed += 0.4;
     }
@@ -124,6 +188,8 @@ function checkCatch() {
       gameOver = true;
       message.textContent =
         "🎉 승리! 낙하물 20개를 받았습니다!";
+
+      playWinSound();
       return;
     }
 
@@ -134,7 +200,6 @@ function checkCatch() {
 function checkMiss() {
   if (itemY > gameHeight) {
     miss++;
-
     missText.textContent = miss;
 
     if (miss >= 3) {
@@ -143,6 +208,7 @@ function checkMiss() {
       message.textContent =
         "💀 패배! 낙하물을 3개 놓쳤습니다.";
 
+      playLoseSound();
       return;
     }
 
@@ -172,9 +238,7 @@ function restartGame() {
   miss = 0;
 
   itemSpeed = 2.2;
-
   gameOver = false;
-
   basketX = 260;
 
   scoreText.textContent = 0;
@@ -186,7 +250,6 @@ function restartGame() {
   basket.style.left = basketX + "px";
 
   resetItem();
-
   gameLoop();
 }
 
