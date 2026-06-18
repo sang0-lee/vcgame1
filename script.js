@@ -1,86 +1,190 @@
-const player = document.getElementById("player");
-const obstacle = document.getElementById("obstacle");
+const basket = document.getElementById("basket");
+const item = document.getElementById("item");
+
 const scoreText = document.getElementById("score");
+const missText = document.getElementById("miss");
+
 const message = document.getElementById("message");
 const restartBtn = document.getElementById("restartBtn");
 
+const gameWidth = 600;
+const gameHeight = 400;
+
+const basketWidth = 80;
+const itemSize = 35;
+
+let basketX = 260;
+
+let itemX = 0;
+let itemY = 0;
+
 let score = 0;
+let miss = 0;
+
+let itemSpeed = 4;
 let gameOver = false;
-let passedObstacle = false;
 
-function jump() {
-  if (gameOver) return;
+const keys = {
+  left: false,
+  right: false
+};
 
-  if (!player.classList.contains("jump")) {
-    player.classList.add("jump");
+function moveBasket() {
+  if (keys.left) {
+    basketX -= 7;
+  }
 
-    setTimeout(() => {
-      player.classList.remove("jump");
-    }, 600);
+  if (keys.right) {
+    basketX += 7;
+  }
+
+  if (basketX < 0) {
+    basketX = 0;
+  }
+
+  if (basketX > gameWidth - basketWidth) {
+    basketX = gameWidth - basketWidth;
+  }
+
+  basket.style.left = basketX + "px";
+}
+
+function resetItem() {
+  itemY = -itemSize;
+
+  itemX = Math.floor(
+    Math.random() * (gameWidth - itemSize)
+  );
+
+  item.style.left = itemX + "px";
+  item.style.top = itemY + "px";
+}
+
+function checkCatch() {
+
+  const basketTop = gameHeight - 55;
+
+  const itemBottom = itemY + itemSize;
+
+  const hitHeight = itemBottom >= basketTop;
+
+  const hitWidth =
+    itemX + itemSize > basketX &&
+    itemX < basketX + basketWidth;
+
+  if (hitHeight && hitWidth) {
+
+    score++;
+
+    scoreText.textContent = score;
+
+    if (score % 5 === 0) {
+      itemSpeed += 1;
+    }
+
+    if (score >= 20) {
+      gameOver = true;
+      message.textContent =
+        "🎉 승리! 낙하물 20개를 받았습니다!";
+      return;
+    }
+
+    resetItem();
   }
 }
 
-function checkCollision() {
-  if (gameOver) return;
+function checkMiss() {
 
-  const playerRect = player.getBoundingClientRect();
-  const obstacleRect = obstacle.getBoundingClientRect();
+  if (itemY > gameHeight) {
 
-  const isColliding =
-    playerRect.left < obstacleRect.right &&
-    playerRect.right > obstacleRect.left &&
-    playerRect.top < obstacleRect.bottom &&
-    playerRect.bottom > obstacleRect.top;
+    miss++;
 
-  if (isColliding) {
-    gameOver = true;
-    obstacle.style.animationPlayState = "paused";
-    message.textContent = "패배! 장애물에 부딪혔습니다.";
-  }
+    missText.textContent = miss;
 
-  if (obstacleRect.right < playerRect.left && !passedObstacle) {
-    score++;
-    scoreText.textContent = score;
-    passedObstacle = true;
+    if (miss >= 3) {
 
-    if (score >= 10) {
       gameOver = true;
-      obstacle.style.animationPlayState = "paused";
-      message.textContent = "승리! 목표 점수 10점을 달성했습니다!";
+
+      message.textContent =
+        "💀 패배! 낙하물을 3개 놓쳤습니다.";
+
+      return;
     }
+
+    resetItem();
+  }
+}
+
+function gameLoop() {
+
+  if (gameOver) {
+    return;
   }
 
-  if (obstacleRect.left > playerRect.right) {
-    passedObstacle = false;
-  }
+  moveBasket();
+
+  itemY += itemSpeed;
+
+  item.style.top = itemY + "px";
+
+  checkCatch();
+  checkMiss();
+
+  requestAnimationFrame(gameLoop);
 }
 
 function restartGame() {
+
   score = 0;
+  miss = 0;
+
+  itemSpeed = 4;
+
   gameOver = false;
-  passedObstacle = false;
 
-  scoreText.textContent = score;
-  message.textContent = "스페이스바 또는 화면 클릭으로 점프하세요!";
+  basketX = 260;
 
-  obstacle.style.animation = "none";
+  scoreText.textContent = 0;
+  missText.textContent = 0;
 
-  setTimeout(() => {
-    obstacle.style.animation = "moveObstacle 1.8s linear infinite";
-    obstacle.style.animationPlayState = "running";
-  }, 10);
+  message.textContent =
+    "← → 방향키로 바구니를 움직여 낙하물을 받으세요!";
+
+  basket.style.left = basketX + "px";
+
+  resetItem();
+
+  gameLoop();
 }
 
 document.addEventListener("keydown", (event) => {
-  if (event.code === "Space") {
-    jump();
+
+  if (event.key === "ArrowLeft") {
+    keys.left = true;
   }
+
+  if (event.key === "ArrowRight") {
+    keys.right = true;
+  }
+
 });
 
-document.addEventListener("click", () => {
-  jump();
+document.addEventListener("keyup", (event) => {
+
+  if (event.key === "ArrowLeft") {
+    keys.left = false;
+  }
+
+  if (event.key === "ArrowRight") {
+    keys.right = false;
+  }
+
 });
 
-restartBtn.addEventListener("click", restartGame);
+restartBtn.addEventListener(
+  "click",
+  restartGame
+);
 
-setInterval(checkCollision, 10);
+resetItem();
+gameLoop();
