@@ -21,13 +21,42 @@ let itemY = 0;
 let score = 0;
 let miss = 0;
 
-let itemSpeed = 4;
+// 기존보다 느리게 수정
+let itemSpeed = 2.2;
+
 let gameOver = false;
 
 const keys = {
   left: false,
   right: false
 };
+
+// 효과음 만들기
+function playCatchSound() {
+  const audioContext = new AudioContext();
+
+  const oscillator = audioContext.createOscillator();
+  const gainNode = audioContext.createGain();
+
+  oscillator.type = "sine";
+  oscillator.frequency.setValueAtTime(700, audioContext.currentTime);
+  oscillator.frequency.exponentialRampToValueAtTime(
+    1200,
+    audioContext.currentTime + 0.1
+  );
+
+  gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+  gainNode.gain.exponentialRampToValueAtTime(
+    0.01,
+    audioContext.currentTime + 0.15
+  );
+
+  oscillator.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+
+  oscillator.start();
+  oscillator.stop(audioContext.currentTime + 0.15);
+}
 
 function moveBasket() {
   if (keys.left) {
@@ -60,10 +89,16 @@ function resetItem() {
   item.style.top = itemY + "px";
 }
 
+function showCatchEffect() {
+  item.classList.add("catch-effect");
+
+  setTimeout(() => {
+    item.classList.remove("catch-effect");
+  }, 150);
+}
+
 function checkCatch() {
-
   const basketTop = gameHeight - 55;
-
   const itemBottom = itemY + itemSize;
 
   const hitHeight = itemBottom >= basketTop;
@@ -73,13 +108,16 @@ function checkCatch() {
     itemX < basketX + basketWidth;
 
   if (hitHeight && hitWidth) {
-
     score++;
 
     scoreText.textContent = score;
 
+    playCatchSound();
+    showCatchEffect();
+
+    // 5점마다 조금씩만 빨라지게 수정
     if (score % 5 === 0) {
-      itemSpeed += 1;
+      itemSpeed += 0.4;
     }
 
     if (score >= 20) {
@@ -94,15 +132,12 @@ function checkCatch() {
 }
 
 function checkMiss() {
-
   if (itemY > gameHeight) {
-
     miss++;
 
     missText.textContent = miss;
 
     if (miss >= 3) {
-
       gameOver = true;
 
       message.textContent =
@@ -116,7 +151,6 @@ function checkMiss() {
 }
 
 function gameLoop() {
-
   if (gameOver) {
     return;
   }
@@ -134,11 +168,10 @@ function gameLoop() {
 }
 
 function restartGame() {
-
   score = 0;
   miss = 0;
 
-  itemSpeed = 4;
+  itemSpeed = 2.2;
 
   gameOver = false;
 
@@ -158,7 +191,6 @@ function restartGame() {
 }
 
 document.addEventListener("keydown", (event) => {
-
   if (event.key === "ArrowLeft") {
     keys.left = true;
   }
@@ -166,11 +198,9 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "ArrowRight") {
     keys.right = true;
   }
-
 });
 
 document.addEventListener("keyup", (event) => {
-
   if (event.key === "ArrowLeft") {
     keys.left = false;
   }
@@ -178,13 +208,9 @@ document.addEventListener("keyup", (event) => {
   if (event.key === "ArrowRight") {
     keys.right = false;
   }
-
 });
 
-restartBtn.addEventListener(
-  "click",
-  restartGame
-);
+restartBtn.addEventListener("click", restartGame);
 
 resetItem();
 gameLoop();
