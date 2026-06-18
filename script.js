@@ -7,6 +7,11 @@ const missText = document.getElementById("miss");
 const message = document.getElementById("message");
 const restartBtn = document.getElementById("restartBtn");
 
+const nameBox = document.getElementById("nameBox");
+const nicknameInput = document.getElementById("nicknameInput");
+const saveRankBtn = document.getElementById("saveRankBtn");
+const rankingList = document.getElementById("rankingList");
+
 const gameWidth = 600;
 const gameHeight = 400;
 
@@ -23,6 +28,8 @@ let miss = 0;
 
 let itemSpeed = 2.2;
 let gameOver = false;
+let gameResult = "";
+let alreadySaved = false;
 
 const keys = {
   left: false,
@@ -185,11 +192,7 @@ function checkCatch() {
     }
 
     if (score >= 20) {
-      gameOver = true;
-      message.textContent =
-        "🎉 승리! 낙하물 20개를 받았습니다!";
-
-      playWinSound();
+      endGame("승리");
       return;
     }
 
@@ -203,17 +206,91 @@ function checkMiss() {
     missText.textContent = miss;
 
     if (miss >= 3) {
-      gameOver = true;
-
-      message.textContent =
-        "💀 패배! 낙하물을 3개 놓쳤습니다.";
-
-      playLoseSound();
+      endGame("패배");
       return;
     }
 
     resetItem();
   }
+}
+
+function endGame(result) {
+  gameOver = true;
+  gameResult = result;
+  nameBox.classList.remove("hidden");
+
+  if (result === "승리") {
+    message.textContent =
+      "🎉 승리! 닉네임을 입력하고 기록을 저장하세요.";
+    playWinSound();
+  } else {
+    message.textContent =
+      "💀 패배! 닉네임을 입력하고 기록을 저장하세요.";
+    playLoseSound();
+  }
+}
+
+function saveRanking() {
+  if (alreadySaved) {
+    alert("이미 기록을 저장했습니다.");
+    return;
+  }
+
+  const nickname = nicknameInput.value.trim();
+
+  if (nickname === "") {
+    alert("닉네임을 입력하세요!");
+    return;
+  }
+
+  const now = new Date();
+
+  const newRecord = {
+    nickname: nickname,
+    score: score,
+    miss: miss,
+    result: gameResult,
+    date: now.toLocaleString()
+  };
+
+  const records =
+    JSON.parse(localStorage.getItem("catchGameRanking")) || [];
+
+  records.push(newRecord);
+
+  // 최근 10개 기록만 저장
+  if (records.length > 10) {
+    records.shift();
+  }
+
+  localStorage.setItem(
+    "catchGameRanking",
+    JSON.stringify(records)
+  );
+
+  alreadySaved = true;
+  nicknameInput.value = "";
+  nameBox.classList.add("hidden");
+
+  showRanking();
+}
+
+function showRanking() {
+  const records =
+    JSON.parse(localStorage.getItem("catchGameRanking")) || [];
+
+  rankingList.innerHTML = "";
+
+  const recentRecords = records.slice().reverse();
+
+  recentRecords.forEach((record, index) => {
+    const li = document.createElement("li");
+
+    li.textContent =
+      `${index + 1}. ${record.nickname} / ${record.result} / 점수 ${record.score}점 / 놓침 ${record.miss}개 / ${record.date}`;
+
+    rankingList.appendChild(li);
+  });
 }
 
 function gameLoop() {
@@ -239,6 +316,9 @@ function restartGame() {
 
   itemSpeed = 2.2;
   gameOver = false;
+  gameResult = "";
+  alreadySaved = false;
+
   basketX = 260;
 
   scoreText.textContent = 0;
@@ -246,6 +326,9 @@ function restartGame() {
 
   message.textContent =
     "← → 방향키로 바구니를 움직여 낙하물을 받으세요!";
+
+  nameBox.classList.add("hidden");
+  nicknameInput.value = "";
 
   basket.style.left = basketX + "px";
 
@@ -273,7 +356,9 @@ document.addEventListener("keyup", (event) => {
   }
 });
 
+saveRankBtn.addEventListener("click", saveRanking);
 restartBtn.addEventListener("click", restartGame);
 
 resetItem();
+showRanking();
 gameLoop();
