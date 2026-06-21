@@ -337,6 +337,40 @@ h1 {
       .ranking-box h2 { margin: 0 0 4px; font-size: 16px; }
       #rankingList li { padding: 5px; margin-bottom: 3px; font-size: 12px; }
     }
+  </style>  <style id="mobile-game-fix">
+    .game-wrap { min-height: 0; }
+    #game { min-height: 0; }
+    #basket { bottom: 88px; }
+    .touch-controls {
+      position: absolute; left: 10px; right: 10px; bottom: 10px;
+      z-index: 25; height: 64px; margin: 0; display: flex; gap: 12px;
+      pointer-events: none;
+    }
+    .move-btn {
+      min-width: 0; height: 64px; padding: 0; pointer-events: auto;
+      display: grid; place-items: center;
+      font-size: clamp(26px, 8vw, 40px); line-height: 1;
+      background: rgba(41, 60, 84, .88);
+      border: 2px solid rgba(255, 255, 255, .75);
+      box-shadow: 0 4px 0 rgba(20, 32, 49, .9);
+    }
+    #startScreen, #infiniteScreen { padding-bottom: 86px; }
+    @media (max-width: 699px) {
+      .game-wrap { width: 100%; height: 100dvh; padding: max(5px, env(safe-area-inset-top)) 6px max(5px, env(safe-area-inset-bottom)); }
+      h1 { font-size: clamp(18px, 5vw, 24px); }
+      .info { font-size: clamp(12px, 3.4vw, 15px); }
+      #game { flex: 1 1 0; width: 100%; max-height: none; }
+      #message { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      #restartBtn { flex: 0 0 auto; }
+      .ranking-box { display: none; }
+    }
+    @media (max-height: 560px) {
+      h1 { display: none; }
+      .info p { margin: 1px 0; }
+      #message { margin: 2px 0; }
+      .touch-controls, .move-btn { height: 56px; }
+      #basket { bottom: 76px; }
+    }
   </style></head>
 <body>
 
@@ -353,7 +387,7 @@ h1 {
       <button id="soundToggle" type="button" aria-label="Mute background music">&#128266;</button>
       <div id="startScreen">
         <h2>낙하물 받기</h2>
-        <p>← → 방향키로 캐릭터를 움직이세요.</p>
+        <p>화살표 키나 화면 아래 ◀ ▶ 버튼으로 움직이세요.</p>
         <p>3단계 클리어 후 무한모드에 도전할 수 있습니다.</p>
         <button id="startBtn">게임 시작</button>
       </div>
@@ -375,12 +409,11 @@ h1 {
       </div>
 
       <div id="item"><img id="meteorImage" class="meteor-image" alt="Meteor"></div>
-    </div>
+      <div class="touch-controls" aria-label="이동 조작">
+        <button id="leftMoveBtn" class="move-btn" type="button" aria-label="왼쪽으로 이동">◀</button>
+        <button id="rightMoveBtn" class="move-btn" type="button" aria-label="오른쪽으로 이동">▶</button>
+      </div>    </div>
 
-    <div class="touch-controls" aria-label="이동 조작">
-      <button id="leftMoveBtn" class="move-btn" type="button" aria-label="왼쪽으로 이동">◀</button>
-      <button id="rightMoveBtn" class="move-btn" type="button" aria-label="오른쪽으로 이동">▶</button>
-    </div>
     <p id="message">게임 시작 버튼을 눌러주세요!</p>
 
     <div id="nameBox" class="hidden">
@@ -598,7 +631,7 @@ function showCatchEffect() {
 }
 
 function checkCatch() {
-  const basketTop = gameHeight - 52;
+  const basketTop = basket.offsetTop + basket.offsetHeight - 32;
   const itemBottom = itemY + itemSize;
 
   const hitHeight = itemBottom >= basketTop;
