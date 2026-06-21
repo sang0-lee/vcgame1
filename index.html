@@ -3,9 +3,39 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#293c54">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
   <title>낙하물 받기 게임</title>
   <link rel="stylesheet" href="style.css">
-</head>
+  <style>
+    #basket .character-image {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      object-fit: contain; object-position: center bottom; z-index: 10;
+      display: none; pointer-events: none;
+    }
+    #basket.image-loaded .character-image { display: block; }
+    #basket.image-loaded .head,
+    #basket.image-loaded .hair,
+    #basket.image-loaded .body,
+    #basket.image-loaded .left-arm,
+    #basket.image-loaded .right-arm,
+    #basket.image-loaded .real-basket { display: none; }
+    #item .meteor-image {
+      width: 100%; height: 100%; object-fit: contain;
+      display: none; pointer-events: none;
+    }
+    #item.image-loaded { background: transparent; border-color: transparent; }
+    #item.image-loaded .meteor-image { display: block; }
+      #soundToggle {
+      position: absolute; top: 10px; right: 10px; z-index: 30;
+      width: 48px; height: 48px; padding: 0;
+      border: 2px solid rgba(255,255,255,.8); border-radius: 50%;
+      background: rgba(34,34,34,.8); color: white;
+      font-size: 24px; line-height: 44px; cursor: pointer;
+      touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+    }
+    #soundToggle:focus-visible { outline: 3px solid #f1c40f; outline-offset: 2px; }</style></head>
 <body>
 
   <div class="game-wrap">
@@ -18,6 +48,7 @@
     </div>
 
     <div id="game">
+      <button id="soundToggle" type="button" aria-label="Mute background music">&#128266;</button>
       <div id="startScreen">
         <h2>낙하물 받기</h2>
         <p>← → 방향키로 캐릭터를 움직이세요.</p>
@@ -32,6 +63,7 @@
       </div>
 
       <div id="basket">
+        <img id="characterImage" class="character-image" alt="Bear character">
         <div class="head"></div>
         <div class="hair"></div>
         <div class="body"></div>
@@ -40,7 +72,7 @@
         <div class="real-basket"></div>
       </div>
 
-      <div id="item"></div>
+      <div id="item"><img id="meteorImage" class="meteor-image" alt="Meteor"></div>
     </div>
 
     <p id="message">게임 시작 버튼을 눌러주세요!</p>
@@ -58,7 +90,93 @@
     </div>
   </div>
 
-  <script src="script.js"></script>
+    <audio id="bgm" src="sounds/bgm.mp3" preload="auto" loop></audio>  <script src="script.js"></script>
 
-</body>
+  <script>
+    function loadGameImage(img, primaryPath, alternatePath) {
+      const parent = img.parentElement;
+      img.addEventListener("load", () => parent.classList.add("image-loaded"));
+      img.addEventListener("error", () => {
+        parent.classList.remove("image-loaded");
+        if (!img.dataset.retried) {
+          img.dataset.retried = "true";
+          img.src = alternatePath;
+        } else {
+          img.removeAttribute("src");
+        }
+      });
+      img.src = primaryPath;
+    }
+
+    loadGameImage(
+      document.getElementById("characterImage"),
+      "images/bear.png",
+      "image/bear.png"
+    );
+    loadGameImage(
+      document.getElementById("meteorImage"),
+      "images/Meteor.png",
+      "image/Meteor.png"
+    );
+  </script>  <script>
+    (() => {
+      const bgm = document.getElementById("bgm");
+      const soundToggle = document.getElementById("soundToggle");
+      const startButton = document.getElementById("startBtn");
+      const challengeButton = document.getElementById("challengeBtn");
+      const restartButton = document.getElementById("restartBtn");
+      let gameHasStarted = false;
+
+      bgm.volume = 0.18;
+
+      function updateSoundButton() {
+        const muted = bgm.muted;
+        soundToggle.textContent = String.fromCodePoint(muted ? 0x1F507 : 0x1F50A);
+        soundToggle.setAttribute("aria-label", muted ? "Unmute background music" : "Mute background music");
+        soundToggle.setAttribute("aria-pressed", String(muted));
+      }
+
+      function playBgm() {
+        if (!gameHasStarted || bgm.muted) return;
+        const playPromise = bgm.play();
+        if (playPromise) playPromise.catch(() => {});
+      }
+
+      function beginMusic() {
+        gameHasStarted = true;
+        playBgm();
+      }
+
+      startButton.addEventListener("click", beginMusic);
+      challengeButton.addEventListener("click", beginMusic);
+
+      soundToggle.addEventListener("click", event => {
+        event.preventDefault();
+        event.stopPropagation();
+        bgm.muted = !bgm.muted;
+        updateSoundButton();
+        if (!bgm.muted) playBgm();
+      });
+
+      restartButton.addEventListener("click", () => {
+        gameHasStarted = false;
+        bgm.pause();
+        bgm.currentTime = 0;
+      });
+
+      ["pointerdown", "touchstart", "keydown"].forEach(type => {
+        document.addEventListener(type, playBgm, { passive: true });
+      });
+
+      updateSoundButton();
+    })();
+  </script>  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js").catch(error => {
+          console.error("Service worker registration failed:", error);
+        });
+      });
+    }
+  </script></body>
 </html>

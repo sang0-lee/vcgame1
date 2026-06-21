@@ -1,0 +1,27 @@
+{
+  "name": "\ub099\ud558\ubb3c \ud53c\ud558\uae30",
+  "short_name": "\ub099\ud558\ubb3c",
+  "description": "\ub5a8\uc5b4\uc9c0\ub294 \ub099\ud558\ubb3c\uc744 \ubc1b\ub294 \uce90\uc8fc\uc5bc \uac8c\uc784",
+  "lang": "ko",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f2f7ff",
+  "theme_color": "#293c54",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
